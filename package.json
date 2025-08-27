@@ -1,11 +1,13 @@
 {
   "name": "mediaflow-proxy",
   "version": "1.0.0",
+  "description": "MediaFlow Proxy custom",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "request": "^2.88.2"
   }
 }
