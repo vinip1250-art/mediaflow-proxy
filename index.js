@@ -1,30 +1,52 @@
-const express = require("express");
+const express = require('express');
+const request = require('request');
+const fetch = require('node-fetch');
+
 const app = express();
-
 const PORT = process.env.PORT || 10000;
-const API_PASSWORD = process.env.API_PASSWORD || "0524988";
+const API_PASSWORD = process.env.API_PASSWORD || "0524988"; // senha padrão
 
-// Middleware para autenticar com api_password
+// Middleware de autenticação simples
 app.use((req, res, next) => {
-  const apiPassword = req.query.api_password;
-  if (apiPassword !== API_PASSWORD) {
+  const pass = req.query.api_password || req.headers['x-api-password'];
+  if (pass !== API_PASSWORD) {
     return res.status(401).json({ error: "Unauthorized" });
   }
   next();
 });
 
-// Rota principal de teste
-app.get("/", (req, res) => {
-  res.send("✅ MediaFlow Proxy rodando!");
+// Endpoint /myip -> retorna IP do proxy
+app.get('/myip', async (req, res) => {
+  try {
+    const response = await fetch("https://api.ipify.org?format=json");
+    const data = await response.json();
+    res.json({ ip: data.ip, status: "ok" });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: err.message });
+  }
 });
 
-// Nova rota /myip
-app.get("/myip", (req, res) => {
-  const ip =
-    req.headers["x-forwarded-for"] ||
-    req.connection.remoteAddress ||
-    req.socket.remoteAddress;
-  res.json({ ip, status: "ok" });
+// Endpoint /proxy -> acessa qualquer URL
+app.get('/proxy', (req, res) => {
+  const targetUrl = req.query.url;
+  if (!targetUrl) {
+    return res.status(400).json({ error: "Missing url parameter" });
+  }
+
+  request(targetUrl, (error, response, body) => {
+    if (error) {
+      return res.status(500).json({ status: "error", message: error.message });
+    }
+
+    try {
+      // tenta parsear JSON
+      const json = JSON.parse(body);
+      return res.json(json);
+    } catch (e) {
+      // se não for JSON, retorna como texto
+      return res.json({ status: "ok", response: body });
+    }
+  });
 });
 
 app.listen(PORT, () => {
