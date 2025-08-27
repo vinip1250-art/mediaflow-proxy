@@ -5,28 +5,34 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 const API_PASSWORD = process.env.API_PASSWORD || "0524988";
 
-// Middleware de autenticação
+// 🔐 Middleware para autenticação simples com query param api_password
 app.use((req, res, next) => {
-  const password = req.query.api_password || req.headers["x-api-password"];
-  if (password !== API_PASSWORD) {
-    return res.status(401).json({ error: "Unauthorized" });
+  const password = req.query.api_password;
+  if (!password || password !== API_PASSWORD) {
+    res.set("WWW-Authenticate", 'Basic realm="MediaFlow Proxy"');
+    return res.status(401).send("Unauthorized");
   }
   next();
 });
 
-// Endpoint de teste de IP (retorna o IP público do proxy)
+// 🟢 Endpoint de status
+app.get("/", (req, res) => {
+  res.json({ status: "ok", message: "🚀 MediaFlow Proxy ativo!" });
+});
+
+// 🟢 Retorna o IP público do servidor proxy
 app.get("/myip", async (req, res) => {
   try {
     const response = await fetch("https://api.ipify.org?format=json");
     const data = await response.json();
     res.json({ ip: data.ip, status: "ok" });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro ao buscar IP" });
+    console.error("Erro ao buscar IP:", err);
+    res.status(500).json({ error: "Erro ao obter IP público" });
   }
 });
 
-// Endpoint genérico de proxy (ex: /proxy?url=https://api.ipify.org?format=json)
+// 🟢 Proxy para qualquer URL (uso: /proxy?api_password=xxxx&url=http...)
 app.get("/proxy", async (req, res) => {
   const targetUrl = req.query.url;
   if (!targetUrl) {
@@ -40,11 +46,11 @@ app.get("/proxy", async (req, res) => {
     res.set("Content-Type", response.headers.get("content-type") || "text/plain");
     res.send(body);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro ao buscar URL", details: err.message });
+    console.error("Erro no proxy:", err);
+    res.status(500).json({ error: "Erro ao acessar a URL solicitada" });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 MediaFlow rodando na porta ${PORT}`);
+  console.log(`🚀 MediaFlow Proxy rodando na porta ${PORT}`);
 });
