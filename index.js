@@ -1,28 +1,23 @@
 const express = require("express");
-const request = require("request");
 const fetch = require("node-fetch");
 
 const app = express();
 const PORT = process.env.PORT || 10000;
-const API_PASSWORD = process.env.API_PASSWORD || "0524988";
+const API_PASSWORD = process.env.API_PASSWORD || "0524988"; // 🔑 senha do proxy
 
-// 🔑 Middleware para verificar senha
+// 🔒 Middleware de autenticação
 function checkAuth(req, res, next) {
   const password = req.query.api_password;
-  if (password !== API_PASSWORD) {
+  if (!password || password !== API_PASSWORD) {
     return res.status(401).json({ error: "Unauthorized" });
   }
   next();
 }
 
-// Rota padrão
-app.get("/", (req, res) => {
-  res.send("🚀 MediaFlow Proxy ativo!");
-});
-
-// Rota de proxy genérica
+// 🌐 Rota principal de proxy
 app.get("/proxy", checkAuth, async (req, res) => {
   const targetUrl = req.query.url;
+
   if (!targetUrl) {
     return res.status(400).json({ error: "URL inválida" });
   }
@@ -38,7 +33,7 @@ app.get("/proxy", checkAuth, async (req, res) => {
   }
 });
 
-// 🆕 Rota para verificar o IP do proxy
+// 🆕 Rota para verificar o IP público do Render
 app.get("/proxy/ip", checkAuth, async (req, res) => {
   try {
     const response = await fetch("https://api.ipify.org?format=json");
@@ -49,6 +44,7 @@ app.get("/proxy/ip", checkAuth, async (req, res) => {
   }
 });
 
+// 🚀 Inicialização
 app.listen(PORT, () => {
   console.log(`🚀 MediaFlow rodando na porta ${PORT}`);
 });
