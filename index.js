@@ -7,7 +7,12 @@ const API_USER = process.env.API_USER || "vini";
 const API_PASSWORD = process.env.API_PASSWORD || "0524988";
 
 // 🔐 Middleware de autenticação básica
+// Middleware de autenticação, exceto para /rest/1.0/public-ip
 app.use((req, res, next) => {
+  if (req.path === "/rest/1.0/public-ip") {
+    return next(); // ignora autenticação para essa rota
+  }
+
   const auth = req.headers["authorization"];
   if (!auth) {
     res.set("WWW-Authenticate", 'Basic realm="MediaFlow Proxy"');
@@ -15,9 +20,7 @@ app.use((req, res, next) => {
   }
 
   const base64Credentials = auth.split(" ")[1];
-  const [user, password] = Buffer.from(base64Credentials, "base64")
-    .toString("ascii")
-    .split(":");
+  const [user, password] = Buffer.from(base64Credentials, "base64").toString("ascii").split(":");
 
   if (user === API_USER && password === API_PASSWORD) {
     next();
@@ -25,6 +28,7 @@ app.use((req, res, next) => {
     res.status(403).send("Forbidden");
   }
 });
+
 
 // 🔹 Rota para retornar IP público (necessário para AIOStreams/Stremio)
 app.get("/rest/1.0/public-ip", (req, res) => {
