@@ -1,0 +1,41 @@
+{
+  "name": "AIOStreams",
+  "id": "aiostreams.viren070.com.3a2cf01a-460",
+  "version": "2.11.5",
+  "description": "AIOStreams consolidates multiple Stremio addons and debrid services into a single, easily configurable addon. It allows highly customisable filtering, sorting, and formatting of results and supports proxying all your streams through MediaFlow Proxy or StremThru for improved compatibility and IP restriction bypassing.",
+  "catalogs": [
+    {
+      "type": "other",
+      "id": "05f4414.torrentio-realdebrid",
+      "name": "RealDebrid",
+      "extra": [
+        { "name": "skip" },
+        { "name": "genre", "options": ["None"], "isRequired": true }
+      ]
+    },
+    {
+      "type": "anime",
+      "id": "e90e3b0.kitsu-anime-trending",
+      "name": "Kitsu Trending",
+      "extra": [
+        { "name": "genre", "options": ["None"], "isRequired": true }
+      ]
+    }
+  ],
+  "resources": [
+    { "name": "stream", "types": ["movie","series","anime"], "idPrefixes": ["tt","kitsu"] },
+    { "name": "meta", "types": ["other","anime","movie","series"], "idPrefixes": ["realdebrid","kitsu","mal","anilist","anidb","aiostreamserror"] },
+    { "name": "catalog", "types": ["anime","movie","series"], "idPrefixes": ["kitsu","mal","anilist","anidb"] },
+    { "name": "subtitles", "types": ["movie","series"], "idPrefixes": ["tt","kitsu"] }
+  ],
+  "types": ["movie","series","anime","other"],
+  "background": "https://raw.githubusercontent.com/Viren070/AIOStreams/refs/heads/main/packages/frontend/public/assets/background.png",
+  "logo": "https://raw.githubusercontent.com/Viren070/AIOStreams/refs/heads/main/packages/frontend/public/assets/logo.png",
+  "behaviorHints": {
+    "configurable": true,
+    "configurationRequired": false,
+    "proxy": "http://68.233.127.180:80",
+    "proxyEngine": "mediaflow"
+  },
+  "addonCatalogs": []
+}
