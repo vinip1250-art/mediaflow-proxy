@@ -1,46 +1,46 @@
-const express = require('express');
-const fetch = require('node-fetch');
-const request = require('request');
-
+const express = require("express");
+const fetch = require("node-fetch");
 const app = express();
-const PORT = process.env.PORT || 10000;
+
 const API_PASSWORD = process.env.API_PASSWORD || "0524988";
 
-// middleware para autenticação por senha
+// Middleware de autenticação
 app.use((req, res, next) => {
-  const apiPassword = req.query.api_password;
-  if (!apiPassword || apiPassword !== API_PASSWORD) {
-    return res.status(401).send('Unauthorized');
+  const password = req.query.api_password;
+  if (password !== API_PASSWORD) {
+    return res.status(401).json({ error: "Unauthorized" });
   }
   next();
 });
 
-// rota proxy principal: /proxy?url=https://...
-app.get('/proxy', (req, res) => {
+// Rota de proxy genérica
+app.get("/proxy", async (req, res) => {
   const targetUrl = req.query.url;
   if (!targetUrl) {
-    return res.status(400).send('Missing url parameter');
+    return res.status(400).json({ error: "Missing url parameter" });
   }
 
-  request({
-    url: targetUrl,
-    method: 'GET',
-    headers: req.headers
-  }).pipe(res);
-});
-
-// rota para retornar o IP público do proxy
-app.get('/proxy/ip', async (req, res) => {
   try {
-    const response = await fetch('https://api.ipify.org?format=json');
-    const data = await response.json();
-    res.json({ ip: data.ip, status: 'ok' });
+    const response = await fetch(targetUrl);
+    const body = await response.text();
+    res.send(body);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to fetch IP' });
+    res.status(500).json({ error: err.message });
   }
 });
 
+// 🔹 Nova rota para verificar IP público do proxy
+app.get("/proxy/ip", async (req, res) => {
+  try {
+    const response = await fetch("https://api.ipify.org?format=json");
+    const data = await response.json();
+    res.json({ ip: data.ip, status: "ok" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`🚀 MediaFlow rodando na porta ${PORT}`);
 });
