@@ -5,7 +5,10 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 const API_PASSWORD = process.env.API_PASSWORD || '0524988';
 
-// Middleware de autenticação básica via api_password
+// 🔹 Faz o Express confiar nos headers do proxy (necessário no Render)
+app.set('trust proxy', true);
+
+// Middleware de autenticação via api_password
 app.use((req, res, next) => {
   const password = req.query.api_password || req.headers['x-api-password'];
   if (password !== API_PASSWORD) {
@@ -14,18 +17,16 @@ app.use((req, res, next) => {
   next();
 });
 
-// Rota para verificar IP público
+// Endpoint para testar o IP detectado
 app.get('/proxy/ip', (req, res) => {
   const ip =
-    (req.headers['x-forwarded-for'] || '').split(',')[0].trim() ||
-    req.connection?.remoteAddress ||
-    req.socket?.remoteAddress ||
-    (req.connection?.socket ? req.connection.socket.remoteAddress : null);
+    req.ip || // Express já usa x-forwarded-for quando trust proxy está ativado
+    (req.headers['x-forwarded-for'] || '').split(',')[0].trim();
 
   res.json({ ip, status: 'ok' });
 });
 
-// Exemplo de proxy simples (se precisar)
+// Proxy simples
 app.use('/proxy', (req, res) => {
   const targetUrl = req.query.url;
   if (!targetUrl) {
@@ -35,6 +36,7 @@ app.use('/proxy', (req, res) => {
   req.pipe(request(targetUrl)).pipe(res);
 });
 
+// Inicializa servidor
 app.listen(PORT, () => {
   console.log(`🚀 MediaFlow rodando na porta ${PORT}`);
 });
