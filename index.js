@@ -1,11 +1,13 @@
 const express = require('express');
 const request = require('request');
+const os = require('os');
+const dns = require('dns');
 const app = express();
 
 const PORT = process.env.PORT || 10000;
 const API_PASSWORD = process.env.API_PASSWORD || '0524988';
 
-// 🔹 Faz o Express confiar nos headers do proxy (necessário no Render)
+// 🔹 Confiar em proxy (mas não vamos usar o IP do cliente)
 app.set('trust proxy', true);
 
 // Middleware de autenticação via api_password
@@ -17,13 +19,15 @@ app.use((req, res, next) => {
   next();
 });
 
-// Endpoint para testar o IP detectado
+// Endpoint para testar o IP detectado do servidor
 app.get('/proxy/ip', (req, res) => {
-  const ip =
-    req.ip || // Express já usa x-forwarded-for quando trust proxy está ativado
-    (req.headers['x-forwarded-for'] || '').split(',')[0].trim();
-
-  res.json({ ip, status: 'ok' });
+  // Pega o IP público de saída do servidor
+  dns.lookup(os.hostname(), (err, address) => {
+    if (err) {
+      return res.json({ error: 'Cannot resolve server IP', status: 'fail' });
+    }
+    res.json({ ip: address, status: 'ok' });
+  });
 });
 
 // Proxy simples
