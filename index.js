@@ -3,8 +3,8 @@ const request = require("request");
 const app = express();
 
 const PORT = process.env.PORT || 8888;
-const API_USER = process.env.API_USER || "admin";
-const API_PASSWORD = process.env.API_PASSWORD || "12345";
+const API_USER = process.env.API_USER || "vini";
+const API_PASSWORD = process.env.API_PASSWORD || "0524988";
 
 // 🔐 Middleware de autenticação básica
 app.use((req, res, next) => {
