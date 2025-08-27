@@ -1,43 +1,26 @@
 const express = require("express");
-const request = require("request");
-const auth = require("basic-auth");
-
 const app = express();
+const PORT = process.env.PORT || 10000;
 
-// Porta: usa a do Render/Heroku (process.env.PORT) ou 8888 local
-const PORT = process.env.PORT || 8888;
+const API_PASSWORD = process.env.API_PASSWORD || "0524988";
 
-// Middleware de autenticação: só senha
 app.use((req, res, next) => {
-  const user = auth(req);
+  // verifica header
+  const headerKey = req.headers["x-api-key"];
+  // verifica query string
+  const queryKey = req.query.api_password;
 
-  if (!user || user.pass !== process.env.API_PASSWORD) {
-    res.set("WWW-Authenticate", 'Basic realm="MediaFlow Proxy"');
-    return res.status(401).send("Unauthorized");
+  if (headerKey === API_PASSWORD || queryKey === API_PASSWORD) {
+    return next();
   }
 
-  next();
+  return res.status(401).json({ error: "Unauthorized" });
 });
 
-// Proxy de requisições
-app.use((req, res) => {
-  const targetUrl = req.url.replace(/^\/rest/, "https://api.real-debrid.com/rest");
-
-  console.log(`➡️ Proxying: ${req.method} ${targetUrl}`);
-
-  req.pipe(
-    request({
-      url: targetUrl,
-      method: req.method,
-      headers: {
-        ...req.headers,
-        host: "api.real-debrid.com",
-      },
-    })
-  ).pipe(res);
+app.get("/proxy/ip", (req, res) => {
+  res.json({ ip: req.ip, status: "ok" });
 });
 
-// Inicia servidor
 app.listen(PORT, () => {
   console.log(`🚀 MediaFlow rodando na porta ${PORT}`);
 });
