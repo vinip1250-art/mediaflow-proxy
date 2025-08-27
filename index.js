@@ -7,24 +7,17 @@ const API_USER = process.env.API_USER;
 const API_PASSWORD = process.env.API_PASSWORD;
 
 // 🔒 Middleware de autenticação básica
+const auth = require('basic-auth');
+
 app.use((req, res, next) => {
-  const auth = req.headers["authorization"];
-  if (!auth) {
-    res.set("WWW-Authenticate", 'Basic realm="MediaFlow Proxy"');
-    return res.status(401).send("Auth required");
+  const user = auth(req);
+  if (!user || user.pass !== process.env.API_PASSWORD) {
+    res.set('WWW-Authenticate', 'Basic realm="MediaFlow Proxy"');
+    return res.status(401).send('Unauthorized');
   }
-
-  const base64Credentials = auth.split(" ")[1];
-  const [user, password] = Buffer.from(base64Credentials, "base64")
-    .toString("ascii")
-    .split(":");
-
-  if (user === API_USER && password === API_PASSWORD) {
-    next();
-  } else {
-    return res.status(403).send("Forbidden");
-  }
+  next();
 });
+
 
 // 🌍 Rota para IP público (AIOStreams/Stremio precisa dela)
 app.get("/rest/1.0/public-ip", (req, res) => {
