@@ -1,43 +1,47 @@
-const express = require('express');
-const fetch = require('node-fetch');
+const express = require("express");
+const fetch = require("node-fetch");
 
 const app = express();
 const PORT = process.env.PORT || 10000;
-const API_PASSWORD = process.env.API_PASSWORD || '0524988';
+const API_PASSWORD = process.env.API_PASSWORD || "0524988";
 
-app.set('trust proxy', true);
-
-// 🔐 autenticação
+// Middleware de autenticação
 app.use((req, res, next) => {
-  const password = req.query.api_password || req.headers['x-api-password'];
+  const password = req.query.api_password || req.headers["x-api-password"];
   if (password !== API_PASSWORD) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: "Unauthorized" });
   }
   next();
 });
 
-// 🔎 endpoint para ver o IP público real do servidor
-app.get('/proxy/ip', async (req, res) => {
+// Endpoint de teste de IP (retorna o IP público do proxy)
+app.get("/myip", async (req, res) => {
   try {
-    const r = await fetch('https://api.ipify.org?format=json');
-    const data = await r.json();
-    res.json({ ip: data.ip, status: 'ok' });
+    const response = await fetch("https://api.ipify.org?format=json");
+    const data = await response.json();
+    res.json({ ip: data.ip, status: "ok" });
   } catch (err) {
-    res.json({ error: err.message, status: 'fail' });
+    console.error(err);
+    res.status(500).json({ error: "Erro ao buscar IP" });
   }
 });
 
-// 🌍 proxy genérico
-app.use('/proxy', async (req, res) => {
+// Endpoint genérico de proxy (ex: /proxy?url=https://api.ipify.org?format=json)
+app.get("/proxy", async (req, res) => {
   const targetUrl = req.query.url;
-  if (!targetUrl) return res.status(400).send('Missing url parameter');
+  if (!targetUrl) {
+    return res.status(400).json({ error: "Parâmetro 'url' é obrigatório" });
+  }
 
   try {
-    const r = await fetch(targetUrl, { method: req.method, headers: req.headers });
-    res.status(r.status);
-    r.body.pipe(res);
+    const response = await fetch(targetUrl);
+    const body = await response.text();
+
+    res.set("Content-Type", response.headers.get("content-type") || "text/plain");
+    res.send(body);
   } catch (err) {
-    res.status(500).send(err.message);
+    console.error(err);
+    res.status(500).json({ error: "Erro ao buscar URL", details: err.message });
   }
 });
 
