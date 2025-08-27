@@ -1,16 +1,13 @@
 const express = require('express');
-const request = require('request');
-const os = require('os');
-const dns = require('dns');
-const app = express();
+const fetch = require('node-fetch');
 
+const app = express();
 const PORT = process.env.PORT || 10000;
 const API_PASSWORD = process.env.API_PASSWORD || '0524988';
 
-// 🔹 Confiar em proxy (mas não vamos usar o IP do cliente)
 app.set('trust proxy', true);
 
-// Middleware de autenticação via api_password
+// 🔐 autenticação
 app.use((req, res, next) => {
   const password = req.query.api_password || req.headers['x-api-password'];
   if (password !== API_PASSWORD) {
@@ -19,28 +16,31 @@ app.use((req, res, next) => {
   next();
 });
 
-// Endpoint para testar o IP detectado do servidor
-app.get('/proxy/ip', (req, res) => {
-  // Pega o IP público de saída do servidor
-  dns.lookup(os.hostname(), (err, address) => {
-    if (err) {
-      return res.json({ error: 'Cannot resolve server IP', status: 'fail' });
-    }
-    res.json({ ip: address, status: 'ok' });
-  });
-});
-
-// Proxy simples
-app.use('/proxy', (req, res) => {
-  const targetUrl = req.query.url;
-  if (!targetUrl) {
-    return res.status(400).send('Missing url parameter');
+// 🔎 endpoint para ver o IP público real do servidor
+app.get('/proxy/ip', async (req, res) => {
+  try {
+    const r = await fetch('https://api.ipify.org?format=json');
+    const data = await r.json();
+    res.json({ ip: data.ip, status: 'ok' });
+  } catch (err) {
+    res.json({ error: err.message, status: 'fail' });
   }
-
-  req.pipe(request(targetUrl)).pipe(res);
 });
 
-// Inicializa servidor
+// 🌍 proxy genérico
+app.use('/proxy', async (req, res) => {
+  const targetUrl = req.query.url;
+  if (!targetUrl) return res.status(400).send('Missing url parameter');
+
+  try {
+    const r = await fetch(targetUrl, { method: req.method, headers: req.headers });
+    res.status(r.status);
+    r.body.pipe(res);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 MediaFlow rodando na porta ${PORT}`);
 });
