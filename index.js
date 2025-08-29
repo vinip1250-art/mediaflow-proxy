@@ -50,6 +50,16 @@ app.get("/proxy/ip", checkAuth, async (req, res) => {
   }
 });
 
+// 🆕 Rota de debug para inspecionar requisições
+app.all("/proxy/debug", (req, res) => {
+  res.json({
+    method: req.method,
+    query: req.query,
+    headers: req.headers,
+    body: req.body || null,
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 MediaFlow rodando na porta ${PORT}`);
 });
