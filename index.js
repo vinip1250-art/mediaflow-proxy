@@ -1,6 +1,7 @@
 const express = require("express");
-
+const fetch = (...args) => import("node-fetch").then(({default: fetch}) => fetch(...args));
 const app = express();
+
 const PORT = process.env.PORT || 10000;
 const API_PASSWORD = process.env.API_PASSWORD || "0524988";
 
