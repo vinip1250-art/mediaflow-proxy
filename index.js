@@ -1,5 +1,5 @@
 const express = require("express");
-const fetch = (...args) => import("node-fetch").then(({default: fetch}) => fetch(...args));
+const fetch = (...args) => import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const app = express();
 
 const PORT = process.env.PORT || 10000;
@@ -15,7 +15,7 @@ function checkAuth(req, res, next) {
 }
 
 // Rota padrão
-app.get("/", (req, res) => {
+app.get("/", checkAuth, (req, res) => {
   res.send("🚀 MediaFlow Proxy ativo!");
 });
 
