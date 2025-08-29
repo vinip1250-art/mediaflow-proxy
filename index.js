@@ -5,17 +5,19 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 const API_PASSWORD = process.env.API_PASSWORD || "0524988";
 
-// 🔑 Middleware de autenticação
+// 🔑 Middleware de autenticação atualizado
 function checkAuth(req, res, next) {
-  const password = req.query.api_password;
-  if (password !== API_PASSWORD) {
+  const passwordFromQuery = req.query.api_password;
+  const passwordFromHeader = req.headers["x-api-password"];
+
+  if (passwordFromQuery !== API_PASSWORD && passwordFromHeader !== API_PASSWORD) {
     return res.status(401).json({ error: "Unauthorized" });
   }
   next();
 }
 
 // Rota padrão
-app.get("/", checkAuth, (req, res) => {
+app.get("/", (req, res) => {
   res.send("🚀 MediaFlow Proxy ativo!");
 });
 
